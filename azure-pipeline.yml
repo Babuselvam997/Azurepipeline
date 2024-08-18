@@ -1,0 +1,31 @@
+trigger:
+  branches:
+    include:
+      - main  # or whichever branch you want to trigger the pipeline
+
+pool:
+  vmImage: 'ubuntu-latest'
+variables: 
+  VM_IP: '4.247.21.106' 
+  VM_USERNAME: 'azureuser'
+stages:
+  - stage: Deploy
+    jobs:
+      - job: DeployToVM
+        steps:
+          - checkout: self
+
+          - task: CopyFilesOverSSH@0
+            inputs:
+              sshEndpoint: 'MyVMConnection'
+              sourceFolder: '$(Build.SourcesDirectory)'
+              targetFolder: '/home/$(VM_USERNAME)/app'
+              cleanTargetFolder: true
+
+          - task: SSH@0
+            inputs:
+              sshEndpoint: 'MyVMConnection'
+              script: |
+                sudo apt-get update
+                sudo apt-get install -y nginx  # example deployment task
+                sudo cp -r /home/$(VM_USERNAME)/app/* /var/www/html/
